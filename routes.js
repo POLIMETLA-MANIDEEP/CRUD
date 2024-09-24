@@ -1,78 +1,64 @@
-import express from 'express'
-import mongoose from 'mongoose';
-import User from './userModel';
+const User = require("./userModel");
 
-const app = express();
+const createUser = async (req, res) => {
+  try {
+    await User.create(req.body);
+    res.status(201).json({ status: "success" });
+  } catch (error) {
+    res.status(400).json({ status: "fail" });
+  }
+};
 
-app.use(express.json());
+const readAllusers = async (req, res) => {
+  try {
+    const userData = await User.find({});
+    res.status(200).json(userData);
+  } catch (error) {
+    res.status(400).json({ status: "fail" });
+  }
+};
 
+const readByReg = async (req, res) => {
+  try {
+    const reg = req.params.reg;
+    const user = await User.findOne({ regdno: reg });
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(400).json({ status: "fail" });
+  }
+};
 
+const updateUserByReg = async (req, res) => {
+  try {
+    const reg = req.params.reg;
+    const user = await User.findOneAndUpdate({ regdno: reg }, req.body, {
+      new: true,
+    });
 
-
-
-
-app.post("/createuser", async (req, res) => {
-    try {
-        const bodyData = req.body;
-        const user = new User(bodyData);
-        const userData = await user.save();
-        res.send(userData);
-    } catch (error) {
-        res.send(error);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
-});
 
-app.get("/readalluser", async(req, res)=>{
-    try{
-        const userData = await User.find({});
-        res.send(userData);
-    }catch(error){
-        res.send(error);
-    }
-});
+    res.send(user);
+  } catch (error) {
+    res.status(500).json({ status: "fail" });
+  }
+};
+const deleteByReg = async (req, res) => {
+  try {
+    const reg = req.params.reg;
+    await User.findOneAndDelete({ regdno: reg });
+    res.json({ status: "success", message: "Deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ status: "fail" });
+  }
+};
 
-app.get("/read/:name", async(req, res)=>{
-    try{
-        const name = req.params.name;
-        const user = await User.findOne({ name: name });
-        res.send(user);
-    }catch(error){
-        res.send(error);
-    }
-});
-
-app.put("/updateuser/:name", async (req, res) => {
-    try {
-        const name = req.params.name;
-        const user = await User.findOneAndUpdate({ name: name }, req.body, { new: true });
-        
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        res.send(user);
-    } catch (error) {
-        res.status(500).send(error);
-    }
-});
-
-app.get("/", (req, res) => {
-    res.send("from get route");
-});
-
-app.delete("/delete/:name", async(req, res) => {
-    try {
-        const name = req.params.name;
-        const user = await User.findOneAndDelete({ name: name });
-    }
-    catch(error){
-        console.log(error);
-    }
-});
-
-app.listen(8000, () => {
-    console.log(`server is running at 8000`);
-});
-
-
-module.exports= app
+module.exports = {
+  createUser,
+  deleteByReg,
+  updateUserByReg,
+  readByReg,
+  readAllusers,
+  createUser,
+};
